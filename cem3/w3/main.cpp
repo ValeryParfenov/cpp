@@ -45,18 +45,21 @@ public:
     }
 };
 
+struct LineSegmint{
+    int begin = 0;
+    int end = 0;
+    LineSegmint(int begin, int end): begin(begin), end(end){}
+};
+
 class SuperState : State{
 public:
     std::set<int> in_states = {};
     std::set<int> out_states = {};
-    int* line_segment;
-    SuperState(int* line_segment, std::set<int> in_states, std::set<int> out_states):
+    LineSegmint &line_segment;
+    SuperState(LineSegmint &line_segment, std::set<int> in_states, std::set<int> out_states):
     line_segment(line_segment), in_states(in_states), out_states(out_states){};
     bool contains(int s) const override {
-//        std::cout << in_states.count(s) << std::endl;
-//        std::cout << (line_segment[0] < s && s < line_segment[1]) << std::endl;
-//        std::cout << out_states.count(s) << std::endl;
-        return (in_states.count(s) + (line_segment[0] < s && s < line_segment[1]) - out_states.count(s));
+        return (in_states.count(s) + (line_segment.begin < s && s < line_segment.end) - out_states.count(s));
     }
 };
 
@@ -96,9 +99,9 @@ std::set<int> random_set(int n, int min, int max, int seed){
 }
 
 int main(int argc, const char * argv[]) {
-    int a[2] = {3,6};
-    SuperState state(a, {6, 8, 9}, {5});
-    std::cout << state.contains(9) << std::endl;
+    LineSegmint l(3, 6);
+    SuperState state(l, {6, 8, 9}, {5});
+    std::cout << state.contains(7) << std::endl;
 //    DiscreteState d(1);
 //    SegmentState s(0,10);
 //    SetState ss({2, 3, 5, 7, 23, 48, 57, 60, 90, 98});
