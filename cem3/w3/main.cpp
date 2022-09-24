@@ -5,7 +5,7 @@
 
 class State {
 public:
-    virtual bool contains(int s) = 0;
+    virtual bool contains(int s) const = 0;
 };
 
 class DiscreteState : public State {
@@ -15,39 +15,39 @@ private:
 public:
     DiscreteState(int state): state(state) { }
 
-    bool contains(int s) override {
+    bool contains(int s) const override {
         return s == state;
     }
 };
 
 class SegmentState : public State{
-private:
+public:
     int beg, end;
 
 public:
     SegmentState(): beg(0), end(-1) { }
     SegmentState(int beg, int end): beg(beg), end(end) { }
 
-    bool contains(int s) override {
+    bool contains(int s) const override {
         return s >= beg && s <= end;
     }
 };
 
 class SetState : public State {
-private:
+public:
     std::set<int> states;
 
 public:
     SetState(): states() { }
     SetState(std::set<int> const &src): states(src) { }
 
-    bool contains(int s) override {
+    bool contains(int s) const override {
         return states.count(s) > 0;
     }
 };
 
 class ProbabilityTest {
-private:
+public:
     unsigned seed;
     int test_min, test_max;
     unsigned test_count;
@@ -65,12 +65,57 @@ public:
     }
 };
 
+std::set<int> random_set(int n, int min, int max, int seed){
+    std::set<int> set;
+    int i = 0;
+    std::default_random_engine rng(seed);
+    std::uniform_int_distribution<int> dstr(min,max);
+    while(i < n){
+
+        int x = dstr(rng);
+        if(set.count(x) == 0){
+            set.emplace(x);
+            i ++;
+        }
+    }
+    return set;
+}
+
 int main(int argc, const char * argv[]) {
     DiscreteState d(1);
     SegmentState s(0,10);
-    SetState ss({1, 3, 5, 7, 23, 48, 57, 60, 90, 99});
-    ProbabilityTest pt(10,0,100,1);
-    std::cout << pt(d) << std::endl;
+    SetState ss({2, 3, 5, 7, 23, 48, 57, 60, 90, 98});
+
+//    ProbabilityTest pt(10,0,100,1);
+//    for(int i = 0; i < 10000; i++){
+//        pt.test_count = 10 * i;
+//        std::cout << pt(s) << ", " << std::endl;
+//        //std::cout << i * 10 << ", " << std::endl;
+//    }
+
+//    ProbabilityTest pt(10,0,100,1);
+//    for(int i = 0; i < 10000; i++){
+//        pt.test_count = 10 * i;
+//        std::cout << pt(ss) << ", " << std::endl;
+//        //std::cout << i * 10 << ", " << std::endl;
+//    }
+
+//    ProbabilityTest pt(10,0,100,1000);
+//    SegmentState s1(0,10);
+//    for(int i = 1; i < 100; i++){
+//        s1.end = i;
+//        //std::cout << pt(s1) << ", " << std::endl;
+//        std::cout << i << ", " << std::endl;
+//    }
+
+//    ProbabilityTest pt(10,0,100,10000);
+//    SetState sss;
+//    for(int i = 1; i < 100; i++){
+//        sss = random_set(i, 0, 100, 11);
+//        std::cout << pt(sss) << ", " << std::endl;
+//        //std::cout << i << ", " << std::endl;
+//    }
+
 //    std::cout << pt(s) << std::endl;
 //    std::cout << pt(ss) << std::endl;
     return 0;
