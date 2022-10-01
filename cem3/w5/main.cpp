@@ -2,12 +2,12 @@
 
 template <typename T>
 struct Comparator {
-    virtual bool operator()(T const &lha, T const&rha) const = 0 ;
+    virtual int operator()(T const &lha, T const&rha) const = 0 ;
 };
 
 struct IntComparator final : Comparator<int> {
-    bool operator () (int const &lha , int const &rha ) const override {
-        return lha > rha ;
+    int operator () (int const &lha , int const &rha ) const override {
+        return rha - lha ;
         }
 };
 
@@ -25,9 +25,8 @@ void qsort ( T* first, size_t number, Comparator<T> &comparator){
     }
     T* point = first + (number - 1);
     bool flag = true;
-    T* actual = first;
     for(int i = 0; i < number - 1; i ++){
-        actual  = first + i;
+        T* actual = first +  i;
         if(flag == true && comparator(*point, *actual) > 0){
             swap(point, actual, sizeof(T));
             point = actual;
