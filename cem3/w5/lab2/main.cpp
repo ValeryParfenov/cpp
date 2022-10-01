@@ -1,8 +1,11 @@
 #include <iostream>
+#include <vector>
 
 template <typename T>
 struct Comparator {
-    virtual int operator()(T const &lha, T const&rha) const = 0 ;
+    virtual int operator()(T const &lha, T const&rha) const{
+        return rha > lha ;
+    }
 };
 
 struct IntComparator final : Comparator<int> {
@@ -11,92 +14,114 @@ struct IntComparator final : Comparator<int> {
     }
 };
 
-void swap(void* a, void* b, size_t size){
-    char buff[size];
-    memcpy(buff, a, size);
-    memcpy(a, b, size);
-    memcpy(b, buff, size);
-}
 
-
-template <typename T>
-struct Leafs{
-    T key;
-    Leafs* right;
-    Leafs* left;
-    Leafs* unsestor;
-};
 
 template <typename T>
 class Q{
-    Leafs<T>* head;
+    Q (){}
     Comparator<T> comparator;
-    int lenth = 1;
+    std::vector<T> A;
 
-    Leafs<T>* biggest_baby(Leafs<T>* head){
-        if(head->right == NULL && head->left == NULL){
-            return NULL;
-        }
-        if(head->right == NULL){
-            return head->left;
-        }
-        if(head->left == NULL){
-            return head->right;
-        }
-        if(comparator(head->left->key, head->right->key) == 1){
-            return head->left;
-        }
-        else{return head->right;}
-    }
-
-    void heapify_subtree(Leafs<T>* head){
-        Leafs<T>* big_boy = biggest_baby(head);
-        if(big_boy == NULL){
+    void heapify(int root){
+        root += 1;
+        int biggest_child = -1;
+        if(root * 2 > A.size()){
             return;
         }
-        if(comparator(big_boy->key, head->key) == 1){
-            swap(head, big_boy, sizeof(Leafs<T>));
-            heapify(head);
+        if(root * 2 == A.size()){
+            biggest_child = root * 2 - 1;
         }
-    }
-
-    void hiapify_supertree(Leafs<T>* head, T s){
-        if(comparator(head->key, s) == 1){
-            std::cout << "error in increase key" << std::endl;
+        else if(comparator(A.at(root * 2 - 1), A.at(root * 2)) == 1){
+            biggest_child = root * 2 - 1;
+        }
+        else{biggest_child = root * 2;}
+        if(comparator(A.at(root-1), A.at(biggest_child)) == 1){
             return;
         }
-        head->key = s;
-        while(head->unsestor != NULL){
-            if(comparator(head->key, head->unsestor->key) == 0){
+        T boof = A.at(root-1);
+        A.at(root-1) = A.at(biggest_child);
+        A.at(biggest_child) = boof;
+        heapify(biggest_child);
+    }
+public:
+    Q(Comparator<T> &comparator): comparator(comparator){}
+
+    void push(T key){
+        A.push_back(key);
+        if(A.size() <= 3){
+            return;
+        }
+        int unsestor = A.size()/2;
+        int leaf = A.size();
+        do{
+            if(comparator(A.at(unsestor - 1), A.at(leaf - 1)) == 1){
                 break;
             }
-            swap(head, head->unsestor, sizeof(head));
-            head = head->unsestor;
-        }
+            T boof = A.at(leaf - 1);
+            A.at(leaf - 1) = A.at(unsestor - 1);
+            A.at(unsestor - 1) = boof;
+            leaf = unsestor;
+            unsestor = unsestor/2;
+       } while (unsestor != leaf);
     }
 
-public:
-    Q(Comparator<T> &comparator): comparator(comparator), head(new T){
-        head->left = NULL;
-        head->right = NULL;
-        head->unsestor = NULL;
+    void print(){
+        for(int i = 0; i < A.size(); i++) {
+            std::cout << A.at(i)<< " " << std::endl;
+        }
+        std::cout << std::endl;
     }
 
-    void push(T s){
-
-        Leafs<T>* tail = new Leafs<T>;
-        tail->key = s;
-        tail->left = NULL;
-        tail->right = NULL;
-        int l = this->lenth;
-        for(int i = 0; l > 0; i ++){
-
+    T peak(){
+        if(A.size() == -1){
+            std::cout << "Try to peak empty que" << std::endl;
+            return 0;
         }
-        this->lenth += 1;
+        return A.at(0);
+    }
+
+    T pull(){
+        T boof = A.at(0);
+        A.at(0) = A.at(A.size()-1);
+        A.pop_back();
+        heapify(0);
+        return boof;
+    }
+
+    bool is_empty(){
+        return A.size() == 0;
+    }
+
+    void clear(){
+        A.clear();
     }
 };
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    IntComparator comparator;
+    Q<int> q(comparator);
+
+    std::cout << "Is que emty?   " << q.is_empty() << std::endl;
+
+    q.push(0);
+    q.push(1);
+    q.push(11);
+    q.push(5);
+    q.push(9);
+    q.push(8);
+    q.push(4);
+    q.push(10);
+
+
+    q.print();
+    std::cout << "Is que emty?  " << q.is_empty() << std::endl;
+    std::cout << "We peaked: " << q.peak() << std::endl;
+    std::cout << "We pulled: " << q.pull() << std::endl;
+    q.print();
+    std::cout << "We pulled: " << q.pull() << std::endl;
+    q.print();
+    q.clear();
+    std::cout << "We cleared que " << std::endl;
+    std::cout << "Is que emty?  " << q.is_empty() << std::endl;
     return 0;
 }
