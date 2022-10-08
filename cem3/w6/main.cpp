@@ -2,21 +2,30 @@
 
 template <typename T>
 class Grid final{
-private:
+public:
     using value_type = T;
     using size_type = unsigned;
-public:
     Grid() = delete;
-    T * const data;
-    size_type const y_size, x_size;
+public:
+    T * data;
+    size_type y_size, x_size;
 
     Grid(size_type y_size, size_type x_size):y_size(y_size), x_size(x_size),data(new T[x_size * y_size]){}
 
     ~Grid(){delete data;}
 
-    Grid(Grid<T> const &) = delete;
+    Grid(Grid<T> const & other):Grid(other.y_size, other.x_size){
+        for(int i = 0; i < y_size * x_size; i++){
+            data[i] = other.data[i];
+        }
+    }
+    Grid<T>& operator=(Grid<T>& other){
+        Grid<T> boof(other);
+        std::swap(this->y_size, boof.y_size);
+        std::swap(this->x_size, boof.x_size);
+        std::swap(this->data, boof.data);
+    }
     Grid(Grid<T>&&) = delete;
-    Grid<T>& operator=(Grid<T>&) = delete;
     Grid<T>& operator=(Grid<T>&&) = delete;
 
 //    T operator()(size_type y_idx, size_type x_idx) const {
@@ -39,5 +48,13 @@ public:
 
 int main() {
     Grid<int> a(4, 6);
+    Grid<int> b(0, 0);
+    Grid<int> b1(b);
+    b1 = a;
+    std::cout << a.y_size << std::endl;
+    std::cout << b.y_size << std::endl;
+    std::cout << b1.y_size << std::endl;
+
+
     return 0;
 }
