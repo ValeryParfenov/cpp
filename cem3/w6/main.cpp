@@ -37,6 +37,13 @@ public:
         }
     }
 
+    T* operator [] (size_type y_id){
+        if(y_id > y_size){
+            return nullptr;
+        }
+        return data + y_id * y_size;
+    }
+
 //    T operator()(size_type y_idx, size_type x_idx) const {
 //        return data[y_idx * x_size + x_idx];
 //    }
@@ -75,6 +82,17 @@ int main() {
         Grid<int> a(10, 10, 777);
         std::cout << a.data[10] << std::endl;
         std::cout << a.data[99] << std::endl;
+    }
+    std::cout << std::endl;
+    {
+        Grid<int> a(2, 2);
+        a.data[0] = 0;
+        a.data[1] = 1;
+        a.data[2] = 2;
+        a.data[3] = 3;
+        //      |0  1|
+        //  a = |2  3|
+        std::cout << a[1][1] << std::endl;
     }
 
     return 0;
