@@ -4,11 +4,25 @@ template <typename T, unsigned N>
 class Grid final{
     using size_type = unsigned;
     Grid() = delete;
+    unsigned ptr = 0;
 public:
     T * data;
-    size_type* size;
+    size_type size[N];
 
-    Grid(size_type* size):size(size), data(){
+    void foo(size_type* array, int i){
+        return;
+    }
+
+    template<typename First, typename ...Args>
+    void foo(size_type* array, int i, First first, Args ...args){
+        array[i] = first;
+        ptr++;
+        foo(array, ++i, args...);
+    }
+
+    template<typename ...Args>
+    Grid(Args ...args){
+        foo(size, 0, args ...);
         unsigned line_size = 1;
         for(int i = 0; i < N; i ++){
             line_size = line_size * size[i];
@@ -16,17 +30,33 @@ public:
         data = new T[line_size];
     }
 
-    ~Grid(){delete[] data;}
-
-    Grid(Grid<T, N> const & other):Grid(other.size){
+    template<typename ...Args>
+    Grid(T t, Args ...args){
+        foo(size, 0, args ...);
         unsigned line_size = 1;
         for(int i = 0; i < N; i ++){
             line_size = line_size * size[i];
         }
+        data = new T[line_size];
+        for(int i = 0; i < line_size; i++){
+            data[i] = t;
+        }
+    }
+
+    Grid(Grid<T, N> const & other){
+        unsigned line_size = 1;
+        for(int i = 0; i < N; i ++){
+            size[i] = other.size[i];
+            line_size = line_size * size[i];
+        }
+        data = new T[line_size];
         for(int i = 0; i < line_size; i++){
             data[i] = other.data[i];
         }
     }
+
+    ~Grid(){delete[] data;}
+
     Grid<T, N>& operator=(Grid<T, N>& other){
         Grid<T, N> boof(other);
         std::swap(this->size, boof.size);
@@ -35,7 +65,10 @@ public:
     Grid(Grid<T, N>&&) = delete;
     Grid<T, N>& operator=(Grid<T, N>&&) = delete;
 
-    T* operator ()(size_type * id){
+    template<typename ...Args>
+    T* operator ()(Args ...args) {
+        size_type id[N];
+        foo(id, 0, args...);
         size_type line_id = 0;
         for(int i = 0; i < N; i ++){
             size_type current_size = 1;
@@ -49,21 +82,16 @@ public:
 };
 
 int main() {
-    {
-        unsigned N[4] = {1, 2, 3, 4};
-        Grid<int, 4> a(N);
-        Grid<int, 4> b(a);
-        Grid<int, 4> c(N);
-        c = a;
-    }
-    {
-        unsigned N[3] = {2, 2, 2};
-        Grid<int, 3> a(N);
-        for(int i = 1; i <= 8; i++){
-            a.data[i-1] = i;
-        }
-        unsigned id[3] = {1,1,0};
-        std::cout << *a(id);
-    }
+    Grid<float, 3> const g3(2, 3, 4);
+    Grid<float, 4> g4(4, 4, 4, 4);
+    Grid<float, 3> new_g(g3);
+    Grid<float, 4> new_g4(1, 1, 1, 1);
+    std::cout << new_g.size[0] << ' ' << new_g.size[1] << ' ' << new_g.size[2] << std::endl;
+    new_g4 = g4;
+    std::cout << new_g4.size[0] << ' ' << new_g4.size[1] << ' ' << new_g4.size[2] << ' ' << new_g4.size[3] << std::endl;
+    g4.data[85] = 1234.f;
+    std::cout << *g4(1, 1, 1, 1) << std::endl;
+    Grid<float, 2> g2(1.f, 2, 2);
+    std::cout << *g2(1, 0) << std::endl;
     return 0;
 }
