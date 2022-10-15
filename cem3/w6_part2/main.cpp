@@ -16,7 +16,7 @@ public:
         data = new T[line_size];
     }
 
-    ~Grid(){delete data;}
+    ~Grid(){delete[] data;}
 
     Grid(Grid<T, N> const & other):Grid(other.size){
         unsigned line_size = 1;
