@@ -11,7 +11,7 @@ public:
 
     Grid(size_type y_size, size_type x_size):y_size(y_size), x_size(x_size),data(new T[x_size * y_size]){}
 
-    ~Grid(){delete data;}
+    ~Grid(){delete[] data;}
 
     Grid(Grid<T> const & other):Grid(other.y_size, other.x_size){
         for(int i = 0; i < y_size * x_size; i++){
