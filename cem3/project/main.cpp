@@ -58,7 +58,7 @@ struct MatrixString final: std::vector<VarType> {
     }
 };
 
-// от вартайп требуется, чтобы нулевой эллемент давал true при сравнении с 0
+// от VarType требуется, чтобы нулевой эллемент давал true при сравнении с 0
 // а также поддержка арифметических операций (/ * + -)
 template <typename VarType>
 class Matrix final{
@@ -81,12 +81,12 @@ public:
                 continue;
             }
             matrix.push_back(MatrixString<VarType>()); // пушим новую строчку в матрицу и начинаем заполнять
-            matrix[Height].reserve(Width); //сразу выделяем нужное количество памяти
+            matrix.at(Height).reserve(Width); //сразу выделяем нужное количество памяти
             std::stringstream buffer(string);
             if(Height == 0){
                 while(buffer >> value){
                     Width += 1;
-                    matrix[0].push_back(value);
+                    matrix.at(0).push_back(value);
                 }
                 if(Width == 0){
                     std::cerr << "invalid input (Mat[0x0])";
@@ -96,7 +96,7 @@ public:
             else{
                 unsigned current_width = 0;
                 while(buffer >> value){
-                    matrix[Height].push_back(value);
+                    matrix.at(Height).push_back(value);
                     current_width += 1;
                     if(current_width > Width){
                         std::cerr << "invalid input";
@@ -119,9 +119,9 @@ public:
         unsigned free_vars_amount = 0;
         for(int i = 0; (i < Width - 1) && (i < Height); i++){
             for(int j = i - free_vars_amount; j < Height; j++){
-                if(matrix[i][j] != 0){
+                if(matrix.at(i).at(j) != 0){
                     is_var_free[i] = 0;
-                    std::swap(matrix[j], matrix[i]); // отппрявляем строку с опорным эллементом Xi на i строку
+                    std::swap(matrix.at(j), matrix.at(i)); // отппрявляем строку с опорным эллементом Xi на i строку
                     break;
                 }
             }
@@ -136,9 +136,9 @@ public:
     }
 
     void print() const{
-        for(int i = 0; i < Height; i ++){
-            for(int j = 0; j < Width; j++){
-                std::cout << matrix[i][j] << ' ';
+        for(auto string : matrix){
+            for(auto value : string){
+                std::cout << value << ' ';
             }
             std::cout << std::endl;
         }
