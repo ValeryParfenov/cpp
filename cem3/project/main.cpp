@@ -7,8 +7,8 @@
 #include <cassert>
 
 template <typename VarType>
-struct MatrixString final: std::vector<VarType> {
-    void operator += (MatrixString<VarType> other){
+struct MatrixLine final: std::vector<VarType> {
+    void operator += (MatrixLine<VarType> other){
         if(other.size() != this->size()){
             std::cerr << "unvalid matrix condition";
             exit(1);
@@ -18,7 +18,7 @@ struct MatrixString final: std::vector<VarType> {
         }
     }
 
-    void operator -= (MatrixString<VarType> other){
+    void operator -= (MatrixLine<VarType> other){
         if(other.size() != this->size()){
             std::cerr << "unvalid matrix condition";
             exit(1);
@@ -28,29 +28,29 @@ struct MatrixString final: std::vector<VarType> {
         }
     }
 
-    MatrixString operator + (MatrixString<VarType> other){
-        MatrixString<VarType> new_string(*this);
+    MatrixLine operator + (MatrixLine<VarType> other){
+        MatrixLine<VarType> new_string(*this);
         new_string += other;
         return new_string;
     }
 
-    MatrixString operator - (MatrixString<VarType> other){
-        MatrixString<VarType> new_string(*this);
+    MatrixLine operator - (MatrixLine<VarType> other){
+        MatrixLine<VarType> new_string(*this);
         new_string -= other;
         return new_string;
     }
 
-    MatrixString operator * (VarType value){
-        MatrixString<VarType> new_string(*this);
+    MatrixLine operator * (VarType value){
+        MatrixLine<VarType> new_string(*this);
         for(int i = 0; i < new_string.size(); i++){
             new_string.at(i) = new_string.at(i) * value;
         }
         return new_string;
     }
 
-    MatrixString operator / (VarType value){
+    MatrixLine operator / (VarType value){
         assert(value != 0);
-        MatrixString<VarType> new_string(*this);
+        MatrixLine<VarType> new_string(*this);
         for(int i = 0; i < new_string.size(); i++){
             new_string.at(i) = new_string.at(i) / value;
         }
@@ -63,11 +63,25 @@ struct MatrixString final: std::vector<VarType> {
 template <typename VarType>
 class Matrix final{
 public:
-    std::vector<MatrixString<VarType>> matrix;
+    std::vector<MatrixLine<VarType>> matrix;
     std::unique_ptr<int[]> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
     unsigned Height = 0; // размеры матрицы
     unsigned Width = 0;
     Matrix(){};
+
+    // сделаем опорный эллемент равный 1, поделив строку на его значение. занулим все остальные эллементы
+    // в столбце с данным опорным эллементом вычитанием строки, содержащей опорный эллемент
+    void pick_out_support_var(unsigned line_id, unsigned column_id){
+        VarType current_support_var = matrix.at(line_id).at(column_id);
+        matrix.at(line_id) = matrix.at(line_id) / current_support_var;
+        for(int i = 0; i < Height; i++){
+            if(i == line_id){
+                continue;
+            }
+            matrix.at(i) -= matrix.at(line_id) * matrix.at(i).at(column_id);
+        }
+    }
+
 public:
     // Конструктор, считывающий матрицу из файла
     Matrix(std::string filename){
@@ -80,7 +94,7 @@ public:
             if(string.empty()){
                 continue;
             }
-            matrix.push_back(MatrixString<VarType>()); // пушим новую строчку в матрицу и начинаем заполнять
+            matrix.push_back(MatrixLine<VarType>()); // пушим новую строчку в матрицу и начинаем заполнять
             matrix.at(Height).reserve(Width); //сразу выделяем нужное количество памяти
             std::stringstream buffer(string);
             if(Height == 0){
@@ -111,23 +125,26 @@ public:
             Height += 1;
         }
         is_var_free.reset(new int[Width - 1] {1});
+        for(int i = 0; i < Width - 1; i ++){
+            is_var_free[i] = 1;
+        }
         matrix.shrink_to_fit(); // отдаём назад лишнюю память, если она была выделена под эллементы вектора
         input.close();
     }
 
-    void find_support_elements(){ //нахождение опорных эллементов (нужны для корректной работы simplify)
+    void find_support_elements(){ //нахождение опорных эллементов (нужны для нахождений решеня)
         unsigned free_vars_amount = 0;
-        for(int i = 0; (i < Width - 1) && (i < Height); i++){
+        for(int i = 0; i < Width - 1; i++){
             for(int j = i - free_vars_amount; j < Height; j++){
-                if(matrix.at(i).at(j) != 0){
+                if(matrix.at(j).at(i) != 0){
                     is_var_free[i] = 0;
-                    std::swap(matrix.at(j), matrix.at(i)); // отппрявляем строку с опорным эллементом Xi на i строку
+                    // отппрявляем строку с опорным эллементом Xi на строку под последней опорной строкой
+                    std::swap(matrix.at(j), matrix.at(i-free_vars_amount));
+                    pick_out_support_var(i-free_vars_amount, i);
                     break;
                 }
             }
-            if(is_var_free[i] == 1){
-                free_vars_amount += 1;
-            }
+            free_vars_amount += is_var_free[i];
         }
     }
 
@@ -136,8 +153,8 @@ public:
     }
 
     void print() const{
-        for(auto string : matrix){
-            for(auto value : string){
+        for(auto line : matrix){
+            for(auto value : line){
                 std::cout << value << ' ';
             }
             std::cout << std::endl;
@@ -149,8 +166,8 @@ public:
 int main() {
     Matrix<double> m("input.txt");
     m.find_support_elements();
-    m.matrix[0] += m.matrix[2];
-    m.matrix[0] = m.matrix[0] / 5;
+//    m.matrix[0] += m.matrix[2];
+//    m.matrix[0] = m.matrix[0] / 5;
     m.print();
     //std::cout << (m.matrix[0] + m.matrix[2])[2];
     return 0;
