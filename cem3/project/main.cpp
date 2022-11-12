@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <cassert>
 
 template <typename VarType>
 struct MatrixString final: std::vector<VarType> {
@@ -43,6 +44,15 @@ struct MatrixString final: std::vector<VarType> {
         MatrixString<VarType> new_string(*this);
         for(int i = 0; i < new_string.size(); i++){
             new_string.at(i) = new_string.at(i) * value;
+        }
+        return new_string;
+    }
+
+    MatrixString operator / (VarType value){
+        assert(value != 0);
+        MatrixString<VarType> new_string(*this);
+        for(int i = 0; i < new_string.size(); i++){
+            new_string.at(i) = new_string.at(i) / value;
         }
         return new_string;
     }
@@ -140,7 +150,7 @@ int main() {
     Matrix<double> m("input.txt");
     m.find_support_elements();
     m.matrix[0] += m.matrix[2];
-    m.matrix[0] = m.matrix[0] * 5;
+    m.matrix[0] = m.matrix[0] / 5;
     m.print();
     //std::cout << (m.matrix[0] + m.matrix[2])[2];
     return 0;
