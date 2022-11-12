@@ -6,8 +6,18 @@
 #include <memory>
 
 template <typename VarType>
-struct MatrixString final{
-    std::vector<VarType> string;
+struct MatrixString final: std::vector<VarType> {
+    void operator += (MatrixString<VarType> other){
+        if(other.size() != this->size()){
+            std::cerr << "unvalid matrix condition";
+            exit(1);
+        }
+        for(int i = 0; i < this->size(); i++){
+            this->at(i) += other.at(i);
+        }
+    }
+
+
 };
 
 // от вартайп требуется, чтобы нулевой эллемент давал true при сравнении с 0
@@ -15,7 +25,7 @@ struct MatrixString final{
 template <typename VarType>
 class Matrix final{
 public:
-    std::vector<std::vector<VarType>> matrix;
+    std::vector<MatrixString<VarType>> matrix;
     std::unique_ptr<int[]> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
     unsigned Height = 0; // размеры матрицы
     unsigned Width = 0;
@@ -32,8 +42,8 @@ public:
             if(string.empty()){
                 continue;
             }
-            matrix.push_back(std::vector<VarType>()); // пушим новую строчку в матрицу и начинаем заполнять
-            matrix[Height].reserve(Width); // Сразу выделяем память под целую строчку
+            matrix.push_back(MatrixString<VarType>()); // пушим новую строчку в матрицу и начинаем заполнять
+            matrix[Height].reserve(Width); //сразу выделяем нужное количество памяти
             std::stringstream buffer(string);
             if(Height == 0){
                 while(buffer >> value){
@@ -109,7 +119,7 @@ public:
 int main() {
     Matrix<int> m("input.txt");
     m.find_support_elements();
-    //m.matrix[0] += m.matrix[2];
+    m.matrix[0] += m.matrix[2];
     m.print();
     return 0;
 }
