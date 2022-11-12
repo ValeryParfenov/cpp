@@ -17,7 +17,35 @@ struct MatrixString final: std::vector<VarType> {
         }
     }
 
+    void operator -= (MatrixString<VarType> other){
+        if(other.size() != this->size()){
+            std::cerr << "unvalid matrix condition";
+            exit(1);
+        }
+        for(int i = 0; i < this->size(); i++){
+            this->at(i) -= other.at(i);
+        }
+    }
 
+    MatrixString operator + (MatrixString<VarType> other){
+        MatrixString<VarType> new_string(*this);
+        new_string += other;
+        return new_string;
+    }
+
+    MatrixString operator - (MatrixString<VarType> other){
+        MatrixString<VarType> new_string(*this);
+        new_string -= other;
+        return new_string;
+    }
+
+    MatrixString operator * (VarType value){
+        MatrixString<VarType> new_string(*this);
+        for(int i = 0; i < new_string.size(); i++){
+            new_string.at(i) = new_string.at(i) * value;
+        }
+        return new_string;
+    }
 };
 
 // от вартайп требуется, чтобы нулевой эллемент давал true при сравнении с 0
@@ -77,14 +105,6 @@ public:
         input.close();
     }
 
-    void operator += (int){}
-
-//    void operator += (std::vector<VarType> other){
-//        for(int i = 0; i < Width; i ++){
-//            this[i] += other[i];
-//        }
-//    }
-
     void find_support_elements(){ //нахождение опорных эллементов (нужны для корректной работы simplify)
         unsigned free_vars_amount = 0;
         for(int i = 0; (i < Width - 1) && (i < Height); i++){
@@ -117,9 +137,11 @@ public:
 
 
 int main() {
-    Matrix<int> m("input.txt");
+    Matrix<double> m("input.txt");
     m.find_support_elements();
     m.matrix[0] += m.matrix[2];
+    m.matrix[0] = m.matrix[0] * 5;
     m.print();
+    //std::cout << (m.matrix[0] + m.matrix[2])[2];
     return 0;
 }
