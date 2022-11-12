@@ -6,6 +6,13 @@
 #include <memory>
 
 template <typename VarType>
+struct MatrixString final{
+    std::vector<VarType> string;
+};
+
+// от вартайп требуется, чтобы нулевой эллемент давал true при сравнении с 0
+// а также поддержка арифметических операций (/ * + -)
+template <typename VarType>
 class Matrix final{
 public:
     std::vector<std::vector<VarType>> matrix;
@@ -26,6 +33,7 @@ public:
                 continue;
             }
             matrix.push_back(std::vector<VarType>()); // пушим новую строчку в матрицу и начинаем заполнять
+            matrix[Height].reserve(Width); // Сразу выделяем память под целую строчку
             std::stringstream buffer(string);
             if(Height == 0){
                 while(buffer >> value){
@@ -54,8 +62,37 @@ public:
             }
             Height += 1;
         }
-        is_var_free.reset(new int[Width] {0});
+        is_var_free.reset(new int[Width - 1] {1});
+        matrix.shrink_to_fit(); // отдаём назад лишнюю память, если она была выделена под эллементы вектора
         input.close();
+    }
+
+    void operator += (int){}
+
+//    void operator += (std::vector<VarType> other){
+//        for(int i = 0; i < Width; i ++){
+//            this[i] += other[i];
+//        }
+//    }
+
+    void find_support_elements(){ //нахождение опорных эллементов (нужны для корректной работы simplify)
+        unsigned free_vars_amount = 0;
+        for(int i = 0; (i < Width - 1) && (i < Height); i++){
+            for(int j = i - free_vars_amount; j < Height; j++){
+                if(matrix[i][j] != 0){
+                    is_var_free[i] = 0;
+                    std::swap(matrix[j], matrix[i]); // отппрявляем строку с опорным эллементом Xi на i строку
+                    break;
+                }
+            }
+            if(is_var_free[i] == 1){
+                free_vars_amount += 1;
+            }
+        }
+    }
+
+    void simplify(){
+        find_support_elements();
     }
 
     void print() const{
@@ -71,6 +108,8 @@ public:
 
 int main() {
     Matrix<int> m("input.txt");
-    //m.print();
+    m.find_support_elements();
+    //m.matrix[0] += m.matrix[2];
+    m.print();
     return 0;
 }
