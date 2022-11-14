@@ -62,10 +62,10 @@ struct MatrixLine final: std::vector<VarType> {
 // а также поддержка арифметических операций (/ * + -)
 template <typename VarType>
 class Matrix final{
-private:
+public:
     std::vector<MatrixLine<VarType>> matrix;
     std::unique_ptr<int[]> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
-    std::unique_ptr<std::string[]> solution; // сдесь будет лежать решение системы
+    std::vector<std::string> solution; // сдесь будет лежать решение системы
     unsigned Height = 0; // размеры матрицы
     unsigned Width = 0;
     unsigned free_vars_amount = 0;
@@ -85,14 +85,49 @@ private:
     }
 
     // Для матрицы в УПРОЩЁННОМ ВИДЕ возвращает true если система разрешима, false - иначе
-    bool is_matrix_solvable(){
-        unsigned non_free_vars_amount = Width - free_vars_amount;
+    bool is_simple_matrix_solvable() const{
+        unsigned non_free_vars_amount = Width - free_vars_amount - 1;
         for(unsigned i = non_free_vars_amount; i < Height; i++){
-            if(matrix[i][Width - 1] != 0){
+            if(matrix.at(i).at(Width - 1) != 0){
                 return false;
             }
         }
         return true;
+    }
+
+    // Находит опорные эллементы и приводим матрицу к упрощённому виду
+    void find_support_elements(){ //нахождение опорных эллементов (нужны для нахождений решеня)
+        for(int i = 0; i < Width - 1; i++){
+            for(int j = i - free_vars_amount; j < Height; j++){
+                if(matrix.at(j).at(i) != 0){
+                    is_var_free[i] = 0;
+                    // отппрявляем строку с опорным эллементом Xi на строку под последней опорной строкой
+                    std::swap(matrix.at(j), matrix.at(i-free_vars_amount));
+                    pick_out_support_var(i-free_vars_amount, i);
+                    break;
+                }
+            }
+            free_vars_amount += is_var_free[i];
+        }
+    }
+
+    void make_simple_matrix_solution(){
+        assert(is_simple_matrix_solvable() == true);
+        solution.insert(solution.begin(), Width - 1, "free variable"); // для несвободных переменных переопределим ниже
+        unsigned non_free_vars_amount = Width - free_vars_amount - 1;
+        unsigned current_non_free_var_id = 0;
+        std::ostringstream buffer;
+        for(int i = 0; i < non_free_vars_amount; i ++){
+            while(is_var_free[current_non_free_var_id] == 1){
+                current_non_free_var_id += 1;
+                assert(current_non_free_var_id < Width - 1);
+            }
+            buffer << matrix.at(i).at(Width - 1);
+
+            solution.at(current_non_free_var_id) = buffer.str();
+            buffer.str("");
+            current_non_free_var_id += 1;
+        }
     }
 
 public:
@@ -138,7 +173,7 @@ public:
             }
             Height += 1;
         }
-        solution.reset(new std::string [Width - 1]);
+        solution.reserve(Width - 1);
         is_var_free.reset(new int[Width - 1] {1});
         for(int i = 0; i < Width - 1; i ++){
             is_var_free[i] = 1;
@@ -147,23 +182,17 @@ public:
         input.close();
     }
 
-    // Находит опорные эллементы и приводим матрицу к упрощённому виду
-    void find_support_elements(){ //нахождение опорных эллементов (нужны для нахождений решеня)
-        for(int i = 0; i < Width - 1; i++){
-            for(int j = i - free_vars_amount; j < Height; j++){
-                if(matrix.at(j).at(i) != 0){
-                    is_var_free[i] = 0;
-                    // отппрявляем строку с опорным эллементом Xi на строку под последней опорной строкой
-                    std::swap(matrix.at(j), matrix.at(i-free_vars_amount));
-                    pick_out_support_var(i-free_vars_amount, i);
-                    break;
-                }
-            }
-            free_vars_amount += is_var_free[i];
+    void print_solution(){
+        find_support_elements();
+        if(is_simple_matrix_solvable() == false){
+            std::cout << "no solutions" << std::endl;
+            return;
+        }
+        make_simple_matrix_solution();
+        for(unsigned var_id = 0; var_id < solution.size(); var_id++){
+            std::cout << "x_" << var_id + 1 << " = " << solution.at(var_id) << std::endl;
         }
     }
-
-
 
     void print() const{
         for(auto line : matrix){
@@ -177,10 +206,12 @@ public:
 
 int main() {
     Matrix<double> m("input.txt");
-    m.find_support_elements();
 //    m.matrix[0] += m.matrix[2];
 //    m.matrix[0] = m.matrix[0] / 5;
+//    m.find_support_elements();
     m.print();
-    //std::cout << m.is_matrix_solvable();
+    m.print_solution();
+
+    //std::cout << m.solution[3];
     return 0;
 }
