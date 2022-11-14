@@ -65,8 +65,10 @@ class Matrix final{
 public:
     std::vector<MatrixLine<VarType>> matrix;
     std::unique_ptr<int[]> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
+    std::unique_ptr<std::string[]> solution; // сдесь будет лежать решение системы
     unsigned Height = 0; // размеры матрицы
     unsigned Width = 0;
+    unsigned free_vars_amount = 0;
     Matrix(){};
 
     // сделаем опорный эллемент равный 1, поделив строку на его значение. занулим все остальные эллементы
@@ -97,6 +99,7 @@ public:
             matrix.push_back(MatrixLine<VarType>()); // пушим новую строчку в матрицу и начинаем заполнять
             matrix.at(Height).reserve(Width); //сразу выделяем нужное количество памяти
             std::stringstream buffer(string);
+            // если заполняемая строка первая
             if(Height == 0){
                 while(buffer >> value){
                     Width += 1;
@@ -106,7 +109,7 @@ public:
                     std::cerr << "invalid input (Mat[0x0])";
                     exit(1);
                 }
-            } // если заполняемая строка первая
+            }
             else{
                 unsigned current_width = 0;
                 while(buffer >> value){
@@ -124,6 +127,7 @@ public:
             }
             Height += 1;
         }
+        solution.reset(new std::string [Width - 1]);
         is_var_free.reset(new int[Width - 1] {1});
         for(int i = 0; i < Width - 1; i ++){
             is_var_free[i] = 1;
@@ -132,8 +136,8 @@ public:
         input.close();
     }
 
+    // Находит опорные эллементы и приводим матрицу к упрощённому виду
     void find_support_elements(){ //нахождение опорных эллементов (нужны для нахождений решеня)
-        unsigned free_vars_amount = 0;
         for(int i = 0; i < Width - 1; i++){
             for(int j = i - free_vars_amount; j < Height; j++){
                 if(matrix.at(j).at(i) != 0){
@@ -148,8 +152,15 @@ public:
         }
     }
 
-    void simplify(){
-        find_support_elements();
+    // Для матрицы в УПРОЩЁННОМ ВИДЕ возвращает true если система разрешима, false - иначе
+    bool is_solution_exist(){
+        unsigned non_free_vars_amount = Width - free_vars_amount;
+        for(unsigned i = non_free_vars_amount; i < Height; i++){
+            if(matrix[i][Width - 1] != 0){
+                return false;
+            }
+        }
+        return true;
     }
 
     void print() const{
@@ -162,13 +173,12 @@ public:
     }
 };
 
-
 int main() {
     Matrix<double> m("input.txt");
     m.find_support_elements();
 //    m.matrix[0] += m.matrix[2];
 //    m.matrix[0] = m.matrix[0] / 5;
     m.print();
-    //std::cout << (m.matrix[0] + m.matrix[2])[2];
+    std::cout << m.is_solution_exist();
     return 0;
 }
