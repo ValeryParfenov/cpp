@@ -62,7 +62,7 @@ struct MatrixLine final: std::vector<VarType> {
 // а также поддержка арифметических операций (/ * + -)
 template <typename VarType>
 class Matrix final{
-public:
+private:
     std::vector<MatrixLine<VarType>> matrix;
     std::vector<int> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
     std::vector<std::string> solution; // сдесь будет лежать решение системы
@@ -123,7 +123,11 @@ public:
                 assert(current_non_free_var_id < Width - 1);
             }
             buffer << matrix.at(i).at(Width - 1);
-
+            for(unsigned j = 0; j < Width - 1; j++){
+                if(j != i && is_var_free.at(j) == 1 && matrix.at(i).at(j) != 0){
+                    buffer << " + " << matrix.at(i).at(j) << "*" << "x_"<< j;
+                }
+            }
             solution.at(current_non_free_var_id) = buffer.str();
             buffer.str("");
             current_non_free_var_id += 1;
@@ -203,11 +207,11 @@ public:
 };
 
 int main() {
-    Matrix<double> m("input.txt");
+    Matrix<double> m("input1.txt");
 //    m.matrix[0] += m.matrix[2];
 //    m.matrix[0] = m.matrix[0] / 5;
 //    m.find_support_elements();
-    m.print();
+//    m.print();
     m.print_solution();
 
     //std::cout << m.solution[3];
