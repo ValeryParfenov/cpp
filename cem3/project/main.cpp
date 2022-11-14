@@ -62,7 +62,7 @@ struct MatrixLine final: std::vector<VarType> {
 // а также поддержка арифметических операций (/ * + -)
 template <typename VarType>
 class Matrix final{
-public:
+private:
     std::vector<MatrixLine<VarType>> matrix;
     std::unique_ptr<int[]> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
     std::unique_ptr<std::string[]> solution; // сдесь будет лежать решение системы
@@ -82,6 +82,17 @@ public:
             }
             matrix.at(i) -= matrix.at(line_id) * matrix.at(i).at(column_id);
         }
+    }
+
+    // Для матрицы в УПРОЩЁННОМ ВИДЕ возвращает true если система разрешима, false - иначе
+    bool is_matrix_solvable(){
+        unsigned non_free_vars_amount = Width - free_vars_amount;
+        for(unsigned i = non_free_vars_amount; i < Height; i++){
+            if(matrix[i][Width - 1] != 0){
+                return false;
+            }
+        }
+        return true;
     }
 
 public:
@@ -152,16 +163,7 @@ public:
         }
     }
 
-    // Для матрицы в УПРОЩЁННОМ ВИДЕ возвращает true если система разрешима, false - иначе
-    bool is_solution_exist(){
-        unsigned non_free_vars_amount = Width - free_vars_amount;
-        for(unsigned i = non_free_vars_amount; i < Height; i++){
-            if(matrix[i][Width - 1] != 0){
-                return false;
-            }
-        }
-        return true;
-    }
+
 
     void print() const{
         for(auto line : matrix){
@@ -179,6 +181,6 @@ int main() {
 //    m.matrix[0] += m.matrix[2];
 //    m.matrix[0] = m.matrix[0] / 5;
     m.print();
-    std::cout << m.is_solution_exist();
+    //std::cout << m.is_matrix_solvable();
     return 0;
 }
