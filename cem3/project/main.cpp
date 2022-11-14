@@ -64,7 +64,7 @@ template <typename VarType>
 class Matrix final{
 public:
     std::vector<MatrixLine<VarType>> matrix;
-    std::unique_ptr<int[]> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
+    std::vector<int> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
     std::vector<std::string> solution; // сдесь будет лежать решение системы
     unsigned Height = 0; // размеры матрицы
     unsigned Width = 0;
@@ -76,7 +76,7 @@ public:
     void pick_out_support_var(unsigned line_id, unsigned column_id){
         VarType current_support_var = matrix.at(line_id).at(column_id);
         matrix.at(line_id) = matrix.at(line_id) / current_support_var;
-        for(int i = 0; i < Height; i++){
+        for(unsigned i = 0; i < Height; i++){
             if(i == line_id){
                 continue;
             }
@@ -97,17 +97,17 @@ public:
 
     // Находит опорные эллементы и приводим матрицу к упрощённому виду
     void find_support_elements(){ //нахождение опорных эллементов (нужны для нахождений решеня)
-        for(int i = 0; i < Width - 1; i++){
-            for(int j = i - free_vars_amount; j < Height; j++){
+        for(unsigned i = 0; i < Width - 1; i++){
+            for(unsigned j = i - free_vars_amount; j < Height; j++){
                 if(matrix.at(j).at(i) != 0){
-                    is_var_free[i] = 0;
+                    is_var_free.at(i) = 0;
                     // отппрявляем строку с опорным эллементом Xi на строку под последней опорной строкой
                     std::swap(matrix.at(j), matrix.at(i-free_vars_amount));
                     pick_out_support_var(i-free_vars_amount, i);
                     break;
                 }
             }
-            free_vars_amount += is_var_free[i];
+            free_vars_amount += is_var_free.at(i);
         }
     }
 
@@ -117,8 +117,8 @@ public:
         unsigned non_free_vars_amount = Width - free_vars_amount - 1;
         unsigned current_non_free_var_id = 0;
         std::ostringstream buffer;
-        for(int i = 0; i < non_free_vars_amount; i ++){
-            while(is_var_free[current_non_free_var_id] == 1){
+        for(unsigned i = 0; i < non_free_vars_amount; i ++){
+            while(is_var_free.at(current_non_free_var_id) == 1){
                 current_non_free_var_id += 1;
                 assert(current_non_free_var_id < Width - 1);
             }
@@ -174,10 +174,8 @@ public:
             Height += 1;
         }
         solution.reserve(Width - 1);
-        is_var_free.reset(new int[Width - 1] {1});
-        for(int i = 0; i < Width - 1; i ++){
-            is_var_free[i] = 1;
-        }
+        is_var_free.reserve(Width - 1);
+        is_var_free.insert(is_var_free.begin(), Width - 1, 1);
         matrix.shrink_to_fit(); // отдаём назад лишнюю память, если она была выделена под эллементы вектора
         input.close();
     }
