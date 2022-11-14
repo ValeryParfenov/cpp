@@ -64,7 +64,7 @@ template <typename VarType>
 class Matrix final{
 private:
     std::vector<MatrixLine<VarType>> matrix;
-    std::vector<int> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
+    std::vector<bool> is_var_free; // ели i эллемент массива 1, то переменная свободна, если 0 - не свободна
     std::vector<std::string> solution; // сдесь будет лежать решение системы
     unsigned Height = 0; // размеры матрицы
     unsigned Width = 0;
@@ -125,7 +125,7 @@ private:
             buffer << matrix.at(i).at(Width - 1);
             for(unsigned j = 0; j < Width - 1; j++){
                 if(j != i && is_var_free.at(j) == 1 && matrix.at(i).at(j) != 0){
-                    buffer << " + " << matrix.at(i).at(j) << "*" << "x_"<< j;
+                    buffer << " + " << matrix.at(i).at(j) << "*" << "x_"<< j+1;
                 }
             }
             solution.at(current_non_free_var_id) = buffer.str();
